@@ -8,21 +8,21 @@ import space.invaders.dto.GameStateDto;
 public class Bullet extends AbstractActor {
 
     private final int id;
+    private final BulletDto.Sender sender;
     private int posX;
     private int posY;
-
-    private static final int sceneWidth = GameStateDto.screenSize.width;
     private static final int sceneHeight = GameStateDto.screenSize.height;
 
-    public Bullet(int id, int posX, int posY) {
+    public Bullet(int id, int posX, int posY, BulletDto.Sender sender) {
         this.id = id;
         this.posX = posX;
         this.posY = posY;
+        this.sender = sender;
         getContext().parent().tell(new Update(generateBullet()), getSelf());
     }
 
-    static Props props(int id, int posX, int posY) {
-        return Props.create(Bullet.class, () -> new Bullet(id, posX, posY));
+    static Props props(int id, int posX, int posY, BulletDto.Sender sender) {
+        return Props.create(Bullet.class, () -> new Bullet(id, posX, posY, sender));
     }
 
     @Override
@@ -43,7 +43,7 @@ public class Bullet extends AbstractActor {
     }
 
     private void updateBullet() {
-        posY = posY - 10;
+        posY = sender == BulletDto.Sender.Player ? posY - 10 : posY + 10;
 
         getContext().parent().tell(
                 new Bullet.Update(generateBullet()),

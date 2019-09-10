@@ -4,6 +4,7 @@ import akka.actor.AbstractActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import space.invaders.dto.AlienDto;
+import space.invaders.dto.BulletDto;
 import space.invaders.dto.Image;
 
 public class Alien extends AbstractActor {
@@ -50,7 +51,7 @@ public class Alien extends AbstractActor {
                     );
                 })
                 .match(Alien.Fire.class, fire -> {
-                    fire.bulletManager.tell(new BulletManager.CreateBullet((posX+alienImageSet.getWidth()/2), posY+alienImageSet.getHeight()/2), getSelf());
+                    fire.bulletManager.tell(new BulletManager.CreateBullet((posX+alienImageSet.getWidth()/2), posY+alienImageSet.getHeight()/2, BulletDto.Sender.Alien), getSelf());
                 })
                 .build();
     }

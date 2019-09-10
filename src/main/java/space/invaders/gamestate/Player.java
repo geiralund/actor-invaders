@@ -5,6 +5,7 @@ import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
+import space.invaders.dto.BulletDto;
 import space.invaders.dto.GameStateDto;
 import space.invaders.dto.Image;
 import space.invaders.dto.PlayerDto;
@@ -61,7 +62,7 @@ public class Player extends AbstractActor {
                             getContext().parent().tell(new Update(moveRight()), getSelf());
                         })
                         .match(Fire.class, fire -> {
-                            fire.bulletManager.tell(new BulletManager.CreateBullet((int) (posX+width*0.5), posY), getSelf());
+                            fire.bulletManager.tell(new BulletManager.CreateBullet((int) (posX+width*0.5), posY, BulletDto.Sender.Player), getSelf());
                         })
                         .build();
     }

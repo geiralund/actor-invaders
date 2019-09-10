@@ -25,10 +25,12 @@ public class BulletManager extends AbstractActor {
 
         public int posX;
         public int posY;
+        private BulletDto.Sender sender;
 
-        public CreateBullet(int posX, int posY) {
+        public CreateBullet(int posX, int posY, BulletDto.Sender sender) {
             this.posX = posX;
             this.posY = posY;
+            this.sender = sender;
         }
 
     }
@@ -48,7 +50,7 @@ public class BulletManager extends AbstractActor {
                 .match(CreateBullet.class, createBullet ->
                 {
                     String name = getSender().path().name();
-                    if(name.equals("player")){
+                    if(name.startsWith("player")){
                         create(createBullet,BulletDto.Sender.Player);
 
                     } else {
@@ -62,10 +64,6 @@ public class BulletManager extends AbstractActor {
                     getContext().parent().tell(new Update(refToBullet.values()), getSelf());
                 })
                 .match(Bullet.Update.class, update -> {
-
-
-
-
                     refToBullet.put(getSender(), update.bulletDto);
                 })
                 .match(Terminated.class, terminated -> {
@@ -76,7 +74,7 @@ public class BulletManager extends AbstractActor {
     private void create(CreateBullet createBullet, BulletDto.Sender sender) {
         final int id = nextId++;
         final ActorRef key = getContext().actorOf(
-                Bullet.props(id, createBullet.posX, createBullet.posY),
+                Bullet.props(id, createBullet.posX, createBullet.posY, sender),
                 "bullet" + id);
         getContext().watch(key);
         refToBullet.put(
