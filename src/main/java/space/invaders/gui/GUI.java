@@ -63,6 +63,7 @@ public class GUI extends AbstractActor {
     public Receive createReceive() {
         return receiveBuilder()
                 .match(GameInitialized.class, gameInitialized -> this.game = gameInitialized.game)
+                .match(Game.Start.class, start -> start())
                 .match(GameStateDto.class, this::updateState)
                 .build();
     }
@@ -144,6 +145,7 @@ public class GUI extends AbstractActor {
     }
 
     private void start() {
+
         stage = new Stage();
         stage.setTitle("Space invaders");
         changeScene(getStartScene());

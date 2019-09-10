@@ -5,13 +5,12 @@ import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import space.invaders.dto.AlienDto;
-import space.invaders.dto.BulletDto;
-import space.invaders.dto.GameStateDto;
-import space.invaders.dto.PlayerDto;
+import space.invaders.dto.*;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static java.util.Collections.emptyList;
 
 public class Game extends AbstractActor {
     private final ActorRef guiActor;
@@ -56,7 +55,49 @@ public class Game extends AbstractActor {
 
     @Override
     public Receive createReceive() {
-        return receiveBuilder().build();
+        return  idle();
+
+
     }
+
+    public ActorRef createPlayer() {
+        return getContext().actorOf(Player.props(), "player");
+
+    }
+
+    private Receive idle() {
+        return receiveBuilder()
+                .match(Start.class, start ->  {
+                    log.info("Started")  ;
+                    this.player = createPlayer();
+                    getContext().become(playing());
+                } )
+                .build();
+    }
+
+
+    private Receive playing() {
+
+        return receiveBuilder()
+                .match(Tick.class, tick -> {
+                    guiActor.tell(new GameStateDto(GameStateDto.State.Playing, null, emptyList(), emptyList()), getSelf());
+                })
+                .match(MoveLeft.class, moveLeft -> {
+                    player.tell(moveLeft, getSelf());
+                    log.info("moveLeft - game");
+                })
+                .match(MoveRight.class, moveRight -> {
+                    player.tell(moveRight, getSelf());
+                    log.info("moveRight - game");
+                })
+                .match(Player.Update.class, update -> {
+                    this.playerDto = update.playerDto;
+                    guiActor.tell(new GameStateDto(GameStateDto.State.Playing, this.playerDto, emptyList(), emptyList()), getSelf());
+                })
+
+                .build();
+
+    }
+
 
 }
