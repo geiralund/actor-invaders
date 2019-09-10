@@ -8,6 +8,7 @@ import akka.event.LoggingAdapter;
 import space.invaders.dto.*;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
@@ -22,6 +23,7 @@ public class Game extends AbstractActor {
     private List<AlienDto> aliens = new ArrayList<>();
 
     private LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
+    private ActorRef bulletmanager;
 
     public static Props props(ActorRef guiActor) {
         return Props.create(Game.class, () -> new Game(guiActor));
@@ -70,6 +72,7 @@ public class Game extends AbstractActor {
                 .match(Start.class, start ->  {
                     log.info("Started")  ;
                     this.player = createPlayer();
+                    bulletmanager = getContext().actorOf(BulletManager.props(), "bulletmanager");
                     getContext().become(playing());
                 } )
                 .build();
@@ -80,7 +83,8 @@ public class Game extends AbstractActor {
 
         return receiveBuilder()
                 .match(Tick.class, tick -> {
-                    guiActor.tell(new GameStateDto(GameStateDto.State.Playing, null, emptyList(), emptyList()), getSelf());
+                    bulletmanager.forward(tick, getContext());
+                    updateGui();
                 })
                 .match(MoveLeft.class, moveLeft -> {
                     player.tell(moveLeft, getSelf());
@@ -90,13 +94,25 @@ public class Game extends AbstractActor {
                     player.tell(moveRight, getSelf());
                     log.info("moveRight - game");
                 })
+                .match(Fire.class, fire -> {
+                    player.tell(new Player.Fire(bulletmanager), getSelf());
+                    log.info("fire - game");
+                })
+                .match(BulletManager.Update.class, update -> {
+                    bullets = update.bulletDtoList;
+                    updateGui();
+                })
                 .match(Player.Update.class, update -> {
-                    this.playerDto = update.playerDto;
-                    guiActor.tell(new GameStateDto(GameStateDto.State.Playing, this.playerDto, emptyList(), emptyList()), getSelf());
+                    playerDto = update.playerDto;
+                    updateGui();
                 })
 
                 .build();
 
+    }
+
+    private void updateGui() {
+        guiActor.tell(new GameStateDto(GameStateDto.State.Playing, playerDto, bullets, aliens), getSelf());
     }
 
 

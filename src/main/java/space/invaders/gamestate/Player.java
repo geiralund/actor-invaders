@@ -1,6 +1,7 @@
 package space.invaders.gamestate;
 
 import akka.actor.AbstractActor;
+import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
@@ -27,16 +28,22 @@ public class Player extends AbstractActor {
     private Player(){
         posX = (int) ((sceneWidth + width) * 0.5);
         posY = (sceneHeight - height);
+        getContext().parent().tell(new Update(createPlayer()), getSelf());
     }
 
     public static class Update {
-
-
         public PlayerDto playerDto;
 
         public Update(PlayerDto playerDto) {
             this.playerDto = playerDto;
 
+        }
+    }
+    public static class Fire {
+        public ActorRef bulletManager;
+
+        public Fire(ActorRef bulletManager) {
+            this.bulletManager = bulletManager;
         }
     }
 
@@ -52,6 +59,9 @@ public class Player extends AbstractActor {
                         .match(Game.MoveRight.class, moveRight -> {
                             log.info("moveRight");
                             getContext().parent().tell(new Update(moveRight()), getSelf());
+                        })
+                        .match(Fire.class, fire -> {
+                            fire.bulletManager.tell(new BulletManager.CreateBullet((int) (posX+width*0.5), posY), getSelf());
                         })
                         .build();
     }
