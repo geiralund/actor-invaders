@@ -45,12 +45,27 @@ public class BulletManager extends AbstractActor {
     @Override
     public Receive createReceive() {
         return receiveBuilder()
-                .match(CreateBullet.class, this::create)
+                .match(CreateBullet.class, createBullet ->
+                {
+                    String name = getSender().path().name();
+                    if(name.equals("player")){
+                        create(createBullet,BulletDto.Sender.Player);
+
+                    } else {
+                        create(createBullet,BulletDto.Sender.Alien);
+                    }
+
+
+                })
                 .match(Game.Tick.class, tick -> {
                     refToBullet.keySet().forEach(actorRef -> actorRef.forward(tick, getContext()));
                     getContext().parent().tell(new Update(refToBullet.values()), getSelf());
                 })
                 .match(Bullet.Update.class, update -> {
+
+
+
+
                     refToBullet.put(getSender(), update.bulletDto);
                 })
                 .match(Terminated.class, terminated -> {
@@ -58,7 +73,7 @@ public class BulletManager extends AbstractActor {
                 }).build();
     }
 
-    private void create(CreateBullet createBullet) {
+    private void create(CreateBullet createBullet, BulletDto.Sender sender) {
         final int id = nextId++;
         final ActorRef key = getContext().actorOf(
                 Bullet.props(id, createBullet.posX, createBullet.posY),
@@ -66,6 +81,6 @@ public class BulletManager extends AbstractActor {
         getContext().watch(key);
         refToBullet.put(
                 key,
-                new BulletDto(id, createBullet.posX, createBullet.posY, BulletDto.Sender.Player));
+                new BulletDto(id, createBullet.posX, createBullet.posY, sender));
     }
 }

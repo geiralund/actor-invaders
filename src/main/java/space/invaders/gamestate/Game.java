@@ -24,6 +24,7 @@ public class Game extends AbstractActor {
 
     private LoggingAdapter log = Logging.getLogger(getContext().getSystem(), this);
     private ActorRef bulletmanager;
+    private ActorRef alienManager;
 
     public static Props props(ActorRef guiActor) {
         return Props.create(Game.class, () -> new Game(guiActor));
@@ -73,6 +74,7 @@ public class Game extends AbstractActor {
                     log.info("Started")  ;
                     this.player = createPlayer();
                     bulletmanager = getContext().actorOf(BulletManager.props(), "bulletmanager");
+                    alienManager = getContext().actorOf(AlienManager.props(bulletmanager), "alienmanager");
                     getContext().become(playing());
                 } )
                 .build();
@@ -84,6 +86,7 @@ public class Game extends AbstractActor {
         return receiveBuilder()
                 .match(Tick.class, tick -> {
                     bulletmanager.forward(tick, getContext());
+                    alienManager.forward(tick, getContext());
                     updateGui();
                 })
                 .match(MoveLeft.class, moveLeft -> {
@@ -100,11 +103,12 @@ public class Game extends AbstractActor {
                 })
                 .match(BulletManager.Update.class, update -> {
                     bullets = update.bulletDtoList;
-                    updateGui();
+                })
+                .match(AlienManager.Update.class, update -> {
+                    aliens = update.alienDtoList;
                 })
                 .match(Player.Update.class, update -> {
                     playerDto = update.playerDto;
-                    updateGui();
                 })
 
                 .build();
