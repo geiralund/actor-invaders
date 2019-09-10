@@ -25,12 +25,14 @@ public class BulletManager extends AbstractActor {
 
         public int posX;
         public int posY;
+
         public CreateBullet(int posX, int posY) {
             this.posX = posX;
             this.posY = posY;
         }
 
     }
+
     public static class Update {
         public List<BulletDto> bulletDtoList;
 
@@ -61,6 +63,7 @@ public class BulletManager extends AbstractActor {
         final ActorRef key = getContext().actorOf(
                 Bullet.props(id, createBullet.posX, createBullet.posY),
                 "bullet" + id);
+        getContext().watch(key);
         refToBullet.put(
                 key,
                 new BulletDto(id, createBullet.posX, createBullet.posY, BulletDto.Sender.Player));
